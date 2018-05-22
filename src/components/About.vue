@@ -1,4 +1,4 @@
-<template>
+<<template>
   <div class="about">
       <div class="chat-app">
         <transition name="fade">
@@ -16,8 +16,34 @@
             <div class="input-chat"> 
               <input style="margin-bottom: 5px" type="text" placeholder="Subject"/>
               <input type="text" placeholder="Your email"/>
-              <textarea placeholder="How can we help?"></textarea>
-              <button style="cursor: pointer">Send message</button>
+              <textarea v-model="newComment" placeholder="How can we help?"></textarea>
+              <button @click="addComment()" style="cursor: pointer" v-on:click="show2 = true">Send message</button>
+            </div>
+            <div class="show-chat" v-if="show2">
+              <div class="user-chat-box">
+                <div class="chat-side">
+                  <div v-for="item in anArray">
+                    <div class="chat friend">
+                      <div class="chat-message">
+                        <p v-if="item.Id === 'User'" style="color: green; text-align:left">You:</p>
+                        <p v-else style="color: red; text-align:right">
+                          Admin:
+                        </p>
+                        <div class="message-box" v-bind:class=" (item.Id === 'User') ? 'user-css' : 'ad-css' ">
+                          <p>{{item.message}} </p>
+                          <p class="chat-time">
+                            <span class="chat-time"> {{item.timestamp | formatDate}}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="send-message-box">
+                  <input type="text" v-model="newComment" />
+                  <button @click="addComment" >Send message</button>
+                </div>
+              </div>
             </div>
           </div>
       </transition>
@@ -29,14 +55,77 @@
 </template>
 
 <script>
+/*eslint-disable*/
+import firebase, {
+  chatRef
+, get,
+getId} from '../firebase/index'
+import Vue from 'vue'
+import Vuefire from 'vuefire'
+import dateFilter from '../utils/filter.js';
+import moment from 'moment'
+
+Vue.use(Vuefire);
 export default {
-  name: "About",
-  data: function() {
+  name: 'chat',
+  data() {
     return {
-      show: true
+      comment: '',
+      newComment: '',
+      loading: true,
+      show: false,
+      show2: false
     };
+  },
+
+  mounted() {
+      this.scrollToEnd();
+		},
+  updated() {
+    this.scrollToEnd();
+  },
+   
+  firebase: {
+    // can bind to either a direct Firebase reference or a query
+   
+    anArray: chatRef,
+    
+    // optionally provide the cancelCallback
+    cancelCallback: function () {
+       
+    },
+    // this is called once the data has been retrieved from firebase
+    readyCallback: function () {
+     
+    }
+  },
+  filters: {
+    dateFilter
+  },
+  methods: {
+    scrollToEnd () {
+      var container = document.querySelector(".chat-side");
+      var scrollHeight = container.scrollHeight;
+      container.scrollTop = scrollHeight;
+    },
+    logOut() {
+      firebase.auth().signOut()
+    },
+    addComment () {
+      var userId = get
+      if (this.newComment !== '') {
+        this.comment = this.newComment.trim();
+        chatRef.push({
+          message: this.comment,
+          Id: "User",
+          channel: userId,
+          timestamp: moment().unix()
+        });
+        this.newComment = "";
+      }
+    }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -138,5 +227,109 @@ export default {
   text-align: right;
   margin-right: 10px;
   margin-bottom: 15px;
+}
+.user-chat-box{
+  position: absolute;
+  width: 380px;
+  height: 514px;
+  margin: 10px;
+  top: 0;
+  border-radius: 7px;
+  background-color: #fff;
+}
+.chat-message p{
+  margin: 0px;
+}
+.chat-message p:last-child{
+  font-size: 10px;
+}
+.message-box{
+  color: black;
+  background: rgba(57, 73, 86, 0.19);
+  border-radius: 10px;
+  padding: 5px 10px;
+  max-width: 230px;
+}
+
+.message-box p:first-child{
+  font-size: 14px;
+}
+
+.user-css{
+  text-align: left;
+}
+
+.ad-css{
+  margin-left: 113px;
+  text-align: left;
+}
+
+.chat-time{
+  text-align: right;
+}
+
+.chat-side{
+  overflow-y: scroll;
+  height: 440px;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-top: 10px;
+  padding-bottom: 5px;
+}
+
+.send-message-box {
+  margin-top: 10px;
+}
+
+.send-message-box input{
+  vertical-align: bottom;
+  padding-left: 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  height: 41px;
+  width: 75%;
+}
+
+.send-message-box button{
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  height: 40px;
+  width: 20%;
+  color: #fff;
+  background-color: #51b983;
+  border-radius: 4px;
+  border: 1px solid #51b983;
+}
+
+.chat-side::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: transparent;
+   opacity: 0.5;
+}
+
+.chat-side::-webkit-scrollbar
+{
+	width: 6px;
+	background-color: transparent;
+   opacity: 0.5;
+}
+
+.chat-side::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #51b983;
+  opacity: 0.5;
+}
+.show-chat{
+  position: absolute;
+  height: 533px;
+  width: 100%;
+  top: 0px;
+  background: #0000008c;
+  transition: all 0.3s;
 }
 </style>
